@@ -8,8 +8,10 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ViewController : UIViewController
+//@class DBRestClient;
 
+@interface ViewController : UIViewController <UIGestureRecognizerDelegate> {
+  //  DBRestClient *restClient;
+}
 
 @end
-
