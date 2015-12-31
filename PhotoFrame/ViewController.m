@@ -15,11 +15,20 @@
 @interface ViewController () <DBRestClientDelegate>
 
 @property(weak, nonatomic) IBOutlet UIImageView *mainImageView;
+@property(weak, nonatomic) IBOutlet UIView *pauseView;
 
 @property(strong, nonatomic) DBRestClient *restClient;
 @property(strong, nonatomic) NSArray *photoPaths;
-@property(strong, nonatomic) NSString *lastHash;
-@property(nonatomic) BOOL working;
+@property(strong, nonatomic) NSString *checksumLast;
+@property(atomic) BOOL loadFilePending;
+@property(strong) NSTimer *mainTimer;
+@property(strong) NSThread *mainTimerThread;
+@property(strong, nonatomic) NSDate *start;
+@property(strong, nonatomic) NSString *photoBuffer;
+@property(weak, nonatomic) IBOutlet UIProgressView *progressBar;
+
+#define LOOP_TIME 45
+#define DROPBOX_ROOT @"/"
 
 #define HISTORY_SIZE 5
 @property(strong, nonatomic) NSMutableArray *photoHistory;
@@ -29,19 +38,6 @@
 @end
 
 @implementation ViewController
-
-- (instancetype)init {
-  self = [super init];
-  NSLog(@"ViewController.init()");
-
-  if (self) {
-    self.photoHistory = [NSMutableArray arrayWithCapacity:HISTORY_SIZE];
-    self.pathHistory = [NSMutableArray arrayWithCapacity:HISTORY_SIZE];
-    self.historyIndex = -1;
-  }
-
-  return self;
-}
 
 #pragma mark -
 #pragma mark UIViewController lifecycle
@@ -58,40 +54,52 @@
                                               action:@selector(handleTapFrom:)];
   [self.view addGestureRecognizer:tapRecognizer];
 
-  // swipe gesture
+  // swipe gestures
+  // need multiple recognizers to distinguish directions
   UISwipeGestureRecognizer *leftSwipeRecognizer =
       [[UISwipeGestureRecognizer alloc]
           initWithTarget:self
-                  action:@selector(handleLeftSwipeFrom:)];
+                  action:@selector(handleSwipeFrom:)];
   leftSwipeRecognizer.direction = UISwipeGestureRecognizerDirectionLeft;
   [self.view addGestureRecognizer:leftSwipeRecognizer];
 
+  UISwipeGestureRecognizer *rightSwipeRecognizer =
+      [[UISwipeGestureRecognizer alloc]
+          initWithTarget:self
+                  action:@selector(handleSwipeFrom:)];
+  rightSwipeRecognizer.direction = UISwipeGestureRecognizerDirectionRight;
+  [self.view addGestureRecognizer:rightSwipeRecognizer];
+
   // disable sleep
-  if ([self isPluggedIn]) {
-    [UIApplication sharedApplication].idleTimerDisabled = YES;
-  } else {
-    // TODO: timer if unplugged
-  }
+  [UIApplication sharedApplication].idleTimerDisabled = YES;
+  //  if ([self isPluggedIn]) {
+  //  } else {
+  //  }
+  // TODO: timer if unplugged
   // TODO: catch unplug event
   // TODO: catch background/foreground events in AppDelegate.m
 
-  //  [self nextImage];
+  // start time
+  if (!self.start) {
+    self.start = [NSDate date];
+  }
+
+  // splash screen
+  NSString *imagePath =
+      [[NSBundle mainBundle] pathForResource:@"invader-800" ofType:@"jpg"];
+  UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
+  [self setImage:image];
+  self.pauseView.hidden = YES;
 }
 
 - (void)viewDidLayoutSubviews {
   [super viewDidLayoutSubviews];
   //  NSLog(@"viewDidLayoutSubviews()");
+  //  CGRect f = self.mainImageView.frame;
+  //  NSLog(@"frame (%0.0f, %0.0f, %0.0f, %0.0f)", f.origin.x, f.origin.y,
+  //        f.size.width, f.size.height);
 
-  CGRect f = self.mainImageView.frame;
-  NSLog(@"frame (%0.0f, %0.0f, %0.0f, %0.0f)", f.origin.x, f.origin.y,
-        f.size.width, f.size.height);
-
-  // dropbox init (credentials)
-  // do not call from viewDidLoad (popup causes navctl error)
-  if (![[DBSession sharedSession] isLinked]) {
-    [[DBSession sharedSession] linkUserId:@"csserra@gmail.com"
-                           fromController:self];
-  }
+  [self startMainLoop];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -106,26 +114,135 @@
 }
 
 #pragma mark -
-#pragma mark UI delegates & targets
+#pragma mark UI delegates
 
 - (void)handleTapFrom:(UITapGestureRecognizer *)sender {
   if (sender.state == UIGestureRecognizerStateEnded) {
     NSLog(@"tap");
-    [SystemSounds playFile:@"airdrop_invite.caf"];
+    //[SystemSounds playFile:@"airdrop_invite.caf"];
     //[SystemSounds playID:SystemSoundIDVibrate];
 
-    if (![[DBSession sharedSession] isLinked]) {
-      [[DBSession sharedSession] linkUserId:@"csserra@gmail.com"
-                             fromController:self];
-      NSLog(@"DBlink created from user input");
+    if (self.mainTimer) {
+      [self stopLoop];
+    } else {
+      [self startLoop:LOOP_TIME];
     }
+  }
+}
 
+- (void)handleSwipeFrom:(UISwipeGestureRecognizer *)sender {
+  if (sender.state == UIGestureRecognizerStateEnded) {
+    if (sender.direction & UISwipeGestureRecognizerDirectionRight) {
+      NSLog(@"rightSwipe");
+    }
+    if (sender.direction & UISwipeGestureRecognizerDirectionLeft) {
+      NSLog(@"leftSwipe");
+    }
+    // swipeRecognizer.direction = bits set during config, NOT actual swipe
+    // swipeRecognizer.touches = starting point of swipe
+    //[SystemSounds playID:SystemSoundIDMailSent];
+
+    self.progressBar.hidden = NO;
+    [self.progressBar setProgress:0.0];
+    [self nextImage];
+
+    if (!self.mainTimer) {
+      [self startLoop:LOOP_TIME];
+    }
+  }
+}
+
+// hide status bar
+//- (BOOL)prefersStatusBarHidden {
+//  return YES;
+//}
+
+#pragma mark -
+#pragma mark helpers
+
+static bool _first = YES;
+- (void)startMainLoop {
+  [self linkDropboxSession];
+  [self initDropboxClient];
+  if (_first) {
+    _first = NO;
+    NSLog(@">>> startMainLoop");
+    [self startLoop:LOOP_TIME];
+  }
+}
+- (void)startLoop:(NSTimeInterval)seconds {
+  if (self.mainTimer == nil) {
+    NSLog(@"startLoop()");
+    [self nextImage]; // prime
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+      self.mainTimer =
+          [NSTimer scheduledTimerWithTimeInterval:seconds
+                                           target:self
+                                         selector:@selector(nextImageTimed:)
+                                         userInfo:nil
+                                          repeats:YES];
+      self.mainTimer.tolerance = 5;
+    });
+    self.pauseView.hidden = YES;
+  }
+}
+- (void)stopLoop {
+  NSLog(@"stopLoop()");
+  if (self.mainTimer) {
+    NSTimer *timerRef = self.mainTimer;
+    self.mainTimer = nil;
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [timerRef invalidate];
+    });
+    self.pauseView.hidden = NO;
+  }
+}
+- (void)nextImageTimed:(NSTimer *)timer {
+  NSDate *now = [NSDate date];
+  NSTimeInterval diff = [now timeIntervalSinceDate:self.start];
+  NSLog(@"nextImageTimed() \t+%0.1fs", diff);
+
+  [self nextImage];
+}
+
+// --nextImage() async method chain--
+// nextImage()
+// loadMetadata()
+// ...
+// loadedMetadata() [async]
+// loadFile()
+// ...
+// loadedFile() [async]
+// setImage()
+- (void)nextImage {
+  NSLog(@"nextImage()");
+
+  if (self.loadFilePending) {
+    //    NSLog(@">>> still waiting for previous loadFile()");
+    return;
+  }
+
+  NSLog(@"loadMetadata()...");
+  [self.restClient loadMetadata:DROPBOX_ROOT withHash:self.checksumLast];
+}
+
+// linkDropboxSession()
+// do not call from viewDidLoad (bc popup causes navctl error)
+- (void)linkDropboxSession {
+  if (![[DBSession sharedSession] isLinked]) {
+    [[DBSession sharedSession] linkUserId:@"csserra@gmail.com"
+                           fromController:self];
     if ([[DBSession sharedSession] isLinked]) {
       NSLog(@"linkDropboxSession");
     } else {
-      NSLog(@"DBsession link failed");
+      NSLog(@"linkDropboxSession failed");
     }
+  }
+}
 
+- (void)initDropboxClient {
+  if (self.restClient == nil) {
     self.restClient =
         [[DBRestClient alloc] initWithSession:[DBSession sharedSession]];
     self.restClient.delegate = self;
@@ -133,35 +250,12 @@
   }
 }
 
-- (void)handleLeftSwipeFrom:(UISwipeGestureRecognizer *)sender {
-  if (sender.state == UIGestureRecognizerStateEnded) {
-    // swipeRecognizer.direction = bits set during config, NOT actual swipe
-    // swipeRecognizer.touches = starting point of swipe
-    NSLog(@"leftSwipe");
-    [SystemSounds playID:SystemSoundIDMailSent];
-  }
-  [self nextImage];
-}
-
-// hide status bar
-- (BOOL)prefersStatusBarHidden {
-  return YES;
-}
-
-- (void)nextImage {
-  NSLog(@"nextImage()");
-  UIImage *image = nil;
-
-  NSString *photosRoot = @"/"; // folder-only-access
-  [self.restClient loadMetadata:photosRoot withHash:self.lastHash];
-}
-
 #pragma mark -
 #pragma mark DBRestClient.loadMetadata() delegates
 
 - (void)restClient:(DBRestClient *)client
     loadedMetadata:(DBMetadata *)metadata {
-  self.lastHash = metadata.hash;
+  self.checksumLast = metadata.hash;
   // directory listing
   NSArray *validExtensions =
       [NSArray arrayWithObjects:@"jpg", @"jpeg", @"png", nil];
@@ -175,72 +269,56 @@
     }
   }
   self.photoPaths = [NSArray arrayWithArray:newPhotoPaths];
-  NSLog(@"metadata=%@", newPhotoPaths);
+  NSLog(@"=>loadedMetadata() %lu files", (unsigned long)newPhotoPaths.count);
 
-  [self loadRandomPhotoFromList:self.photoPaths];
-}
-- (BOOL)isOldPath:(NSString *)x {
-  for (NSString *oldPath in self.pathHistory) {
-    if ([oldPath isEqualToString:x])
-      return YES;
-  }
-  return NO;
-}
-- (void)loadRandomPhotoFromList:(NSArray *)pathList {
-  NSString *randomPath = nil;
-  NSUInteger nFiles = pathList.count;
-  do {
-    int nRand = arc4random_uniform(nFiles);
-    randomPath = pathList[nRand];
-    NSLog(@"random file: #%i of %i", nRand, nFiles);
-  } while ([self isOldPath:randomPath]);
-
-  NSString *pathPrefix = @"/";
-  NSString *filename = [randomPath substringFromIndex:(pathPrefix.length)];
-  NSString *dstPath =
-      [NSTemporaryDirectory() stringByAppendingPathComponent:filename];
-
-  NSLog(@"fetching file \"%@\"", randomPath);
-  [self.restClient loadFile:randomPath intoPath:dstPath];
+  [self loadRandomPhoto];
 }
 - (void)restClient:(DBRestClient *)client
     metadataUnchangedAtPath:(NSString *)path {
-  NSLog(@"restClient:metadataUnchangedAtPath()");
-  [self loadRandomPhotoFromList:self.photoPaths];
+  NSLog(@"=>loadedMetadata() no changes");
+  [self loadRandomPhoto];
 }
 - (void)restClient:(DBRestClient *)client
     loadMetadataFailedWithError:(NSError *)error {
   NSLog(@"restClient:loadMetadataFailedWithError: %@",
         [error localizedDescription]);
-  [self setWorking:NO];
 }
 
 #pragma mark -
 #pragma mark DBRestClient.loadFile() delegates
 
-- (void)addPhotoToHistory:(NSString *)localPath {
-}
 - (void)restClient:(DBRestClient *)client
         loadedFile:(NSString *)destPath
        contentType:(NSString *)contentType
           metadata:(DBMetadata *)metadata {
-  NSLog(@"loadedFile(): %@ isa %@", destPath, contentType);
-  NSString *image = [UIImage imageWithContentsOfFile:destPath];
-  // image = [[NSBundle mainBundle] pathForResource:@"galaga9" ofType:@"png"];
-  [self setImage:image];
+  NSArray *pathElems = [destPath componentsSeparatedByString:@"/"];
+  NSString *filename = pathElems[pathElems.count - 1];
+  NSLog(@"=>loadedFile() >%@<", filename);
 
-  // TODO: record new file
-  [self addPhotoToHistory:destPath];
+  self.loadFilePending = NO;
+  self.progressBar.hidden = YES;
+  if (self.mainTimer == nil) {
+    // if paused, buffer and do NOT update image
+    self.photoBuffer = destPath;
+  } else {
+    [self setImage:[UIImage imageWithContentsOfFile:destPath]];
+    [self addPhotoToHistory:destPath];
+  }
 }
 - (void)restClient:(DBRestClient *)client
       loadProgress:(CGFloat)progress
            forFile:(NSString *)destPath {
   // NSLog(@"loadProgress(): %@ at %5.1f%%", destPath, (100.0 * progress));
-  // NOTE: this gets called very frequently during download
+  // NOTE: this gets called VERY frequently during download
+  // TODO: connect to UIProgressView
+  //  - (void)setProgress:(float)progress
+  // animated:(BOOL)animated
+  [self.progressBar setProgress:progress animated:YES];
 }
 - (void)restClient:(DBRestClient *)client
     loadFileFailedWithError:(NSError *)error {
   NSLog(@"loadFileFailedWithError(): %@", [error userInfo]);
+  self.loadFilePending = NO;
 }
 
 // TODO: properties + synthesize + getters
@@ -260,6 +338,42 @@
 
 - (void)setImage:(UIImage *)image {
   self.mainImageView.image = image;
+}
+
+- (void)addPhotoToHistory:(NSString *)localPath {
+}
+
+- (BOOL)isOldPath:(NSString *)x {
+  for (NSString *oldPath in self.pathHistory) {
+    if ([oldPath isEqualToString:x])
+      return YES;
+  }
+  return NO;
+}
+
+- (void)loadRandomPhoto {
+  if (self.photoBuffer) {
+    [self setImage:[UIImage imageWithContentsOfFile:self.photoBuffer]];
+    self.photoBuffer = nil;
+  } else {
+    NSArray *pathList = self.photoPaths;
+    NSString *randomPath = nil;
+    NSUInteger nFiles = pathList.count;
+    do {
+      int nRand = arc4random_uniform(nFiles);
+      randomPath = pathList[nRand];
+      NSLog(@"random file: #%i of %i", nRand, nFiles);
+    } while ([self isOldPath:randomPath]);
+
+    NSString *pathPrefix = DROPBOX_ROOT;
+    NSString *filename = [randomPath substringFromIndex:(pathPrefix.length)];
+    NSString *dstPath =
+        [NSTemporaryDirectory() stringByAppendingPathComponent:filename];
+
+    NSLog(@"loadFile()... >%@<", randomPath);
+    self.loadFilePending = YES;
+    [self.restClient loadFile:randomPath intoPath:dstPath];
+  }
 }
 
 - (BOOL)isPluggedIn {

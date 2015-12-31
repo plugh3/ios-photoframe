@@ -12,17 +12,19 @@
 
 @interface AppDelegate () <DBSessionDelegate, DBNetworkRequestDelegate>
 
+@property(strong, nonatomic) NSString *relinkUserID;
+
 @end
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-
   // Override point for customization after application launch.
   NSLog(@"application:didFinishLaunchingWithOptions");
+
   [self initDropboxSession];
-  [SystemSounds playFile:@"Sherwood_Forest.caf"];
+  //[SystemSounds playFile:@"Sherwood_Forest.caf"];
 
   return YES;
 }
@@ -61,19 +63,6 @@
 }
 
 #pragma mark Dropbox methods
-
-//- (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
-//    if ([[DBSession sharedSession] handleOpenURL:url]) {
-//        if ([[DBSession sharedSession] isLinked]) {
-//            [[UINavigationController ]navigationController
-//             pushViewController:rootViewController.photoViewController
-//             animated:YES];
-//        }
-//        return YES;
-//    }
-//
-//    return NO;
-//}
 
 - (BOOL)application:(UIApplication *)app
             openURL:(NSURL *)url
@@ -150,12 +139,13 @@
   //  }
 }
 
+#pragma mark -
 #pragma mark DBSessionDelegate methods
 
 - (void)sessionDidReceiveAuthorizationFailure:(DBSession *)session
                                        userId:(NSString *)userId {
   NSLog(@"sessionDidReceiveAuthorizationFailure:userId()");
-  NSString *relinkUserId = userId;
+  self.relinkUserID = userId;
   [[[UIAlertView alloc] initWithTitle:@"Dropbox Session Ended"
                               message:@"Do you want to relink?"
                              delegate:self
@@ -164,12 +154,29 @@
 }
 
 #pragma mark -
+#pragma mark UIAlertViewDelegate methods
+
+- (void)alertView:(UIAlertView *)alertView
+    clickedButtonAtIndex:(NSInteger)index {
+  NSLog(@">>> alertView:clickedButtonAtIndex()");
+  UIViewController *rootViewController = self.window.rootViewController;
+  // UIViewController *rootViewController = [[[UIApplication sharedApplication]
+  // keyWindow] rootViewController];
+
+  if (index != alertView.cancelButtonIndex) {
+    [[DBSession sharedSession] linkUserId:self.relinkUserID
+                           fromController:rootViewController];
+  }
+  self.relinkUserID = nil;
+}
+
+#pragma mark -
 #pragma mark DBNetworkRequestDelegate methods
 
 static int outstandingRequests;
 
 - (void)networkRequestStarted {
-  NSLog(@"networkRequestStarted()");
+  //  NSLog(@"networkRequestStarted()");
   outstandingRequests++;
   if (outstandingRequests == 1) {
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
@@ -177,7 +184,7 @@ static int outstandingRequests;
 }
 
 - (void)networkRequestStopped {
-  NSLog(@"networkRequestStopped()");
+  //  NSLog(@"networkRequestStopped()");
   outstandingRequests--;
   if (outstandingRequests == 0) {
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];

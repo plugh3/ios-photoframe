@@ -14,30 +14,86 @@
                         <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" placeholderIntrinsicWidth="1024" placeholderIntrinsicHeight="768" id="8bC-Xf-vdC">
+                    <view key="view" contentMode="scaleAspectFit" placeholderIntrinsicWidth="1024" placeholderIntrinsicHeight="768" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" placeholderIntrinsicWidth="1024" placeholderIntrinsicHeight="768" translatesAutoresizingMaskIntoConstraints="NO" id="UvA-5a-K40" userLabel="Main Image View">
+                            <view contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="U0o-fq-639">
                                 <rect key="frame" x="20" y="20" width="560" height="560"/>
-                                <gestureRecognizers/>
-                            </imageView>
+                                <subviews>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="05L-Ah-P4w" userLabel="black background">
+                                        <rect key="frame" x="-20" y="-21" width="601" height="602"/>
+                                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                                    </view>
+                                    <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" placeholderIntrinsicWidth="1024" placeholderIntrinsicHeight="768" translatesAutoresizingMaskIntoConstraints="NO" id="UvA-5a-K40" userLabel="image">
+                                        <rect key="frame" x="0.0" y="0.0" width="560" height="560"/>
+                                        <gestureRecognizers/>
+                                    </imageView>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="qFc-I9-YoL" userLabel="pause label frame">
+                                        <rect key="frame" x="0.0" y="0.0" width="142" height="86"/>
+                                        <subviews>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Paused" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Tcn-Ov-cCj" userLabel="pause label">
+                                                <rect key="frame" x="32" y="32" width="79" height="21"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="height" constant="21" id="NkD-f2-zkb"/>
+                                                    <constraint firstAttribute="width" constant="79" id="WyH-qT-Ksp"/>
+                                                </constraints>
+                                                <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                                <color key="highlightedColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                                <color key="shadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                            </label>
+                                        </subviews>
+                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                        <color key="tintColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="142" id="X6G-xY-Mxy"/>
+                                            <constraint firstItem="Tcn-Ov-cCj" firstAttribute="leading" secondItem="qFc-I9-YoL" secondAttribute="leading" constant="32" id="dZ2-SH-5ul"/>
+                                            <constraint firstItem="Tcn-Ov-cCj" firstAttribute="top" secondItem="qFc-I9-YoL" secondAttribute="top" constant="32" id="eRv-nH-KLh"/>
+                                            <constraint firstAttribute="height" constant="86" id="jqd-3B-9RH"/>
+                                        </constraints>
+                                    </view>
+                                    <progressView hidden="YES" opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="uC3-Id-kKr">
+                                        <rect key="frame" x="205" y="279" width="150" height="2"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="150" id="cR8-hG-JKT"/>
+                                        </constraints>
+                                    </progressView>
+                                </subviews>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="trailing" secondItem="UvA-5a-K40" secondAttribute="trailing" id="8J6-9R-GP4"/>
+                                    <constraint firstAttribute="bottom" secondItem="05L-Ah-P4w" secondAttribute="bottom" constant="-21" id="Akt-iz-nej"/>
+                                    <constraint firstItem="05L-Ah-P4w" firstAttribute="top" secondItem="U0o-fq-639" secondAttribute="top" constant="-21" id="CUw-Ui-cFD"/>
+                                    <constraint firstItem="UvA-5a-K40" firstAttribute="top" secondItem="U0o-fq-639" secondAttribute="top" id="CWT-i4-g6k"/>
+                                    <constraint firstItem="UvA-5a-K40" firstAttribute="leading" secondItem="U0o-fq-639" secondAttribute="leading" id="LdV-aC-SUG"/>
+                                    <constraint firstAttribute="trailing" secondItem="05L-Ah-P4w" secondAttribute="trailing" constant="-21" id="QhK-Dw-meW"/>
+                                    <constraint firstItem="05L-Ah-P4w" firstAttribute="leading" secondItem="U0o-fq-639" secondAttribute="leading" constant="-20" id="Zv9-DV-bKl"/>
+                                    <constraint firstItem="qFc-I9-YoL" firstAttribute="leading" secondItem="U0o-fq-639" secondAttribute="leading" id="bdx-bd-jbo"/>
+                                    <constraint firstItem="qFc-I9-YoL" firstAttribute="top" secondItem="U0o-fq-639" secondAttribute="top" id="e0O-VU-SUF"/>
+                                    <constraint firstItem="uC3-Id-kKr" firstAttribute="centerY" secondItem="U0o-fq-639" secondAttribute="centerY" id="fGj-RA-1IF"/>
+                                    <constraint firstAttribute="bottom" secondItem="UvA-5a-K40" secondAttribute="bottom" id="i03-2p-6ya"/>
+                                    <constraint firstItem="uC3-Id-kKr" firstAttribute="centerX" secondItem="U0o-fq-639" secondAttribute="centerX" id="sa2-LU-lLQ"/>
+                                </constraints>
+                            </view>
                         </subviews>
-                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="UvA-5a-K40" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="Hdo-6U-KSO"/>
-                            <constraint firstAttribute="bottom" secondItem="UvA-5a-K40" secondAttribute="bottom" constant="20" symbolic="YES" id="aOB-zE-9yp"/>
-                            <constraint firstItem="UvA-5a-K40" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="c0Z-he-7tb"/>
-                            <constraint firstItem="UvA-5a-K40" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="g6h-uL-Vzv"/>
+                            <constraint firstItem="U0o-fq-639" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="L6C-vE-S2V"/>
+                            <constraint firstItem="U0o-fq-639" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="Nfk-gX-SoQ"/>
+                            <constraint firstItem="U0o-fq-639" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="f4G-ys-vli"/>
+                            <constraint firstAttribute="bottom" secondItem="U0o-fq-639" secondAttribute="bottom" constant="20" symbolic="YES" id="s1i-gU-Nis"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="mainImageView" destination="UvA-5a-K40" id="Pdu-ow-nZW"/>
+                        <outlet property="pauseView" destination="qFc-I9-YoL" id="I9g-Ly-luf"/>
+                        <outlet property="progressBar" destination="uC3-Id-kKr" id="w9e-4U-Hqj"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="324" y="284"/>
+            <point key="canvasLocation" x="273" y="293"/>
         </scene>
     </scenes>
 </document>

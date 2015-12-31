@@ -7,9 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C97E4E491C343A0400DF40EC /* invader-800.jpg in Resources */ = {isa = PBXBuildFile; fileRef = C97E4E481C343A0400DF40EC /* invader-800.jpg */; };
 		C9CB2F651C324D8900F62470 /* DropboxSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9CB2F641C324D8900F62470 /* DropboxSDK.framework */; };
-		C9CB2F681C3258FC00F62470 /* galaga-green.png in Resources */ = {isa = PBXBuildFile; fileRef = C9CB2F671C3258FC00F62470 /* galaga-green.png */; };
-		C9CB2F6A1C325A2100F62470 /* galaga9.png in Resources */ = {isa = PBXBuildFile; fileRef = C9CB2F691C325A2100F62470 /* galaga9.png */; };
 		C9CB2F6D1C32657300F62470 /* SystemSounds.m in Sources */ = {isa = PBXBuildFile; fileRef = C9CB2F6C1C32657300F62470 /* SystemSounds.m */; };
 		C9CB2F6F1C326F9100F62470 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9CB2F6E1C326F9100F62470 /* AudioToolbox.framework */; };
 		C9CB2F711C32718400F62470 /* mail-sent.caf in Resources */ = {isa = PBXBuildFile; fileRef = C9CB2F701C32718400F62470 /* mail-sent.caf */; };
@@ -43,9 +42,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C97E4E481C343A0400DF40EC /* invader-800.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "invader-800.jpg"; sourceTree = "<group>"; };
 		C9CB2F641C324D8900F62470 /* DropboxSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = DropboxSDK.framework; sourceTree = "<group>"; };
-		C9CB2F671C3258FC00F62470 /* galaga-green.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "galaga-green.png"; sourceTree = "<group>"; };
-		C9CB2F691C325A2100F62470 /* galaga9.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = galaga9.png; sourceTree = "<group>"; };
 		C9CB2F6B1C32652E00F62470 /* SystemSounds.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SystemSounds.h; sourceTree = "<group>"; };
 		C9CB2F6C1C32657300F62470 /* SystemSounds.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SystemSounds.m; sourceTree = "<group>"; };
 		C9CB2F6E1C326F9100F62470 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -100,11 +98,10 @@
 		C9CB2F661C32579D00F62470 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				C97E4E481C343A0400DF40EC /* invader-800.jpg */,
 				C9CB2F741C33026600F62470 /* airdrop_invite.caf */,
 				C9CB2F721C32F33B00F62470 /* Sherwood_Forest.caf */,
 				C9CB2F701C32718400F62470 /* mail-sent.caf */,
-				C9CB2F671C3258FC00F62470 /* galaga-green.png */,
-				C9CB2F691C325A2100F62470 /* galaga9.png */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -283,10 +280,9 @@
 				C9CB2F731C32F6DD00F62470 /* Sherwood_Forest.caf in Resources */,
 				C9CB2F751C33026600F62470 /* airdrop_invite.caf in Resources */,
 				C9D866F61C2F1E0800218EB6 /* LaunchScreen.storyboard in Resources */,
+				C97E4E491C343A0400DF40EC /* invader-800.jpg in Resources */,
 				C9D866F31C2F1E0800218EB6 /* Assets.xcassets in Resources */,
-				C9CB2F681C3258FC00F62470 /* galaga-green.png in Resources */,
 				C9CB2F711C32718400F62470 /* mail-sent.caf in Resources */,
-				C9CB2F6A1C325A2100F62470 /* galaga9.png in Resources */,
 				C9D866F11C2F1E0800218EB6 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -464,7 +460,7 @@
 					"$(PROJECT_DIR)",
 				);
 				INFOPLIST_FILE = PhotoFrame/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.plugh.PhotoFrame;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -484,7 +480,7 @@
 					"$(PROJECT_DIR)",
 				);
 				INFOPLIST_FILE = PhotoFrame/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.plugh.PhotoFrame;
 				PRODUCT_NAME = "$(TARGET_NAME)";
